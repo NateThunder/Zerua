@@ -29,7 +29,7 @@ export default function LatestReleaseSection() {
             Latest Release
           </p>
           <h2 className="mt-4 font-anton text-4xl font-bold uppercase leading-tight sm:text-5xl">
-            Live at Maverick City
+            I Need Thee (feat. Zerua Music)
           </h2>
         </header>
 
@@ -39,7 +39,7 @@ export default function LatestReleaseSection() {
               <div className="aspect-square overflow-hidden rounded-2xl border border-black/10 bg-black/5 shadow-sm">
                 <img
                   src="/media/Harvest_cover.webp"
-                  alt="Live at Maverick City cover"
+                  alt="I Need Thee Celtic Worship (feat. Zerua Music) cover"
                   className="h-full w-full object-cover"
                 />
               </div>
