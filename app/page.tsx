@@ -7,8 +7,21 @@ export default function Home() {
     <main className="relative bg-transparent">
       <Header />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 pb-24 pt-32 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+      <section className="relative flex min-h-screen items-center justify-center px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+          <video
+            className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-[50%_40%] scale-125"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+            <source src="/media/zerua-overlay.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
           <img
             src="/media/zerua-icon-white.png"
             alt="Zerua Music icon"

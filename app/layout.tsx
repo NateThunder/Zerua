@@ -29,23 +29,7 @@ export default function RootLayout({
       <body
         className={`${anton.variable} ${montserrat.variable} antialiased bg-black text-white`}
       >
-        {/* Background video is a direct child of body to avoid fixed-position bugs
-            caused by ancestor filters/backdrop-filter creating new containing blocks. */}
-        <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
-          <video
-            className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-[50%_40%] scale-125"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          >
-            <source src="/media/zerua-overlay.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
-
-        <div className="relative z-10">{children}</div>
+        {children}
       </body>
     </html>
   );

@@ -59,7 +59,7 @@ export default function Header() {
         </div>
 
         <button
-          className="md:hidden"
+          className="md:hidden -m-3 p-3"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
