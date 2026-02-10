@@ -72,32 +72,51 @@ export default function Header() {
       </div>
 
       {menuOpen && (
-        <div className="fixed inset-0 z-30 bg-black/90 backdrop-blur">
-          <div className="flex h-full flex-col items-center justify-center gap-6 text-sm font-semibold uppercase tracking-[0.35em] text-white">
-            {navItems.map((item) => (
-              <Link
-                key={item}
-                href="#"
-                className="transition-opacity hover:opacity-70"
+        <div className="fixed inset-0 z-30">
+          <button
+            className="absolute inset-0 cursor-default bg-black/20 backdrop-blur-sm"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside className="absolute right-0 top-0 h-full w-[82vw] max-w-sm translate-x-0 animate-[drawer-in_280ms_ease-out] bg-black/95 shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-5">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
+                Menu
+              </span>
+              <button
                 onClick={() => setMenuOpen(false)}
+                aria-label="Close menu"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white transition hover:border-white/50"
               >
-                {item}
-              </Link>
-            ))}
-            <div className="mt-4 flex items-center gap-4">
-              {socials.map(({ label, icon: Icon, href }) => (
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="flex h-full flex-col gap-6 px-6 pb-10 text-sm font-semibold uppercase tracking-[0.35em] text-white">
+              {navItems.map((item) => (
                 <Link
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="text-white/90 transition-opacity hover:opacity-70"
+                  key={item}
+                  href="#"
+                  className="transition-opacity hover:opacity-70"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <Icon className="h-5 w-5" />
+                  {item}
                 </Link>
               ))}
+              <div className="mt-6 flex items-center gap-4">
+                {socials.map(({ label, icon: Icon, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    aria-label={label}
+                    className="text-white/90 transition-opacity hover:opacity-70"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
       )}
     </header>
