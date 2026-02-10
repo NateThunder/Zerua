@@ -7,7 +7,7 @@ export default function Home() {
     <main className="relative bg-transparent">
       <Header />
 
-      <section className="relative flex min-h-screen items-center justify-center px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+      <section className="relative flex min-h-screen items-center justify-center px-4 pb-28 pt-36 sm:px-8 lg:px-16">
         <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           <video
             className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-[50%_40%] scale-125"
@@ -21,17 +21,20 @@ export default function Home() {
           </video>
           <div className="absolute inset-0 bg-black/60" />
         </div>
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
           <img
             src="/media/zerua-icon-white.png"
             alt="Zerua Music icon"
             className="reveal h-16 w-24 object-contain"
           />
-          <h1 className="reveal delay-1 mt-6 font-anton text-4xl font-bold uppercase leading-tight text-[#FF6F61] sm:text-5xl md:text-6xl lg:text-7xl">
+          <h1
+            data-text="Unorthodox, free spirit, rule breaker, one that breaks away from the herd."
+            className="reveal delay-1 noise-text mt-8 max-w-4xl font-anton text-4xl font-bold uppercase leading-tight text-[#FF6F61] sm:text-5xl md:text-6xl lg:text-7xl"
+          >
             Unorthodox, free spirit, rule breaker, one that breaks away from the
             herd.
           </h1>
-          <p className="reveal delay-2 mt-6 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
+          <p className="reveal delay-2 mt-8 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
             Zerua Music is a collective of artists and songwriters pushing past
             the expected, crafting bold worship anthems and soulful storytelling
             for a generation that refuses to be boxed in.
