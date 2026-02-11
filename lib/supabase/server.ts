@@ -27,7 +27,7 @@ function buildTableUrl(table: string, opts: QueryOptions = {}) {
   if (opts.limit) url.searchParams.set("limit", String(opts.limit));
   if (opts.filters) {
     Object.entries(opts.filters).forEach(([key, value]) => {
-      const encoded = typeof value === "string" ? `"${value}"` : `${value}`;
+      const encoded = `${value}`;
       url.searchParams.set(key, `eq.${encoded}`);
     });
   }

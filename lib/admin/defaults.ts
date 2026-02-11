@@ -1,7 +1,7 @@
 import type {
   AboutContent,
+  FeaturedVideoUrlContent,
   HomeHeroCopyContent,
-  ShowcaseVideoContent,
 } from "./types";
 
 export const defaultAboutContent: AboutContent = {
@@ -13,10 +13,7 @@ export const defaultAboutContent: AboutContent = {
   ],
 };
 
-export const defaultShowcaseVideo: ShowcaseVideoContent = {
-  youtube_url: "https://www.youtube.com/watch?v=3zGhq1ZKbjg",
-  title: "Featured video",
-};
+export const defaultFeaturedVideoUrl: FeaturedVideoUrlContent = "";
 
 export const defaultHeroCopy: HomeHeroCopyContent = {
   headline: "Rooted in worship, led by faith, freedom, and unity.",

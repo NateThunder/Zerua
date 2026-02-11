@@ -1,21 +1,20 @@
 ﻿import Header from "../components/Header";
 import LatestReleaseSection from "@/components/LatestReleaseSection";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
+import { Instagram } from "lucide-react";
 import {
+  getFeaturedVideoUrl,
   getFeaturedReleaseData,
   getHomeHeroCopy,
   getMerchItems,
-  getShowcaseVideoContent,
-  getTourDates,
 } from "@/lib/content";
 
 export default async function Home() {
-  const [featuredRelease, showcaseVideo, heroCopy, tourDates, merchItems] =
+  const [featuredRelease, featuredVideoUrl, heroCopy, merchItems] =
     await Promise.all([
       getFeaturedReleaseData(),
-      getShowcaseVideoContent(),
+      getFeaturedVideoUrl(),
       getHomeHeroCopy(),
-      getTourDates(),
       getMerchItems(),
     ]);
 
@@ -55,44 +54,12 @@ export default async function Home() {
         </div>
       </section>
 
-      {!!tourDates.length && (
-        <section className="bg-black py-20 sm:py-24">
-          <div className="mx-auto max-w-5xl px-6">
-            <h2 className="font-anton text-3xl uppercase text-[#FF6F61] sm:text-4xl">
-              Tour Dates
-            </h2>
-            <div className="mt-8 space-y-3">
-              {tourDates.map((date) => (
-                <a
-                  key={date.id}
-                  href={date.ticket_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-white transition hover:bg-white/10"
-                >
-                  <span className="font-semibold">{date.event_date}</span>
-                  <span className="text-white/80">
-                    {date.city} - {date.venue}
-                  </span>
-                  <span className="text-xs uppercase tracking-[0.2em] text-[#FF6F61]">
-                    Tickets
-                  </span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       <LatestReleaseSection
         title={featuredRelease?.title}
         coverImagePath={featuredRelease?.cover_image_path}
         platformLinks={featuredRelease?.links}
       />
-      <FeaturedVideoSection
-        youtubeUrl={showcaseVideo.youtube_url}
-        title={showcaseVideo.title ?? "Featured video"}
-      />
+      {!!featuredVideoUrl && <FeaturedVideoSection videoUrl={featuredVideoUrl} />}
 
       <section className="bg-white py-48 sm:py-60">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 text-center">
@@ -172,7 +139,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-black py-20 sm:py-28">
+      <section className="bg-black py-12 sm:py-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-6 text-center">
           <img
             src="/media/zerua-icon-white.png"
@@ -183,9 +150,10 @@ export default async function Home() {
             href="https://www.instagram.com/zeruamusic/"
             target="_blank"
             rel="noreferrer"
-            className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70 transition-colors hover:text-white"
+            aria-label="Follow Zerua Music on Instagram"
+            className="rounded-full border border-white/20 p-2.5 text-white/70 transition-colors hover:border-white/40 hover:text-white"
           >
-            Instagram
+            <Instagram size={18} />
           </a>
           <p className="max-w-2xl text-xs font-semibold uppercase tracking-[0.3em] text-white/80 sm:text-sm">
             Unorthodox, free spirit, rule breaker, one that breaks away from the
@@ -203,3 +171,4 @@ export default async function Home() {
     </main>
   );
 }
+
