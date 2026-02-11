@@ -1,24 +1,15 @@
-﻿const videoId = "3zGhq1ZKbjg";
-const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(
-  videoUrl
-)}&format=json`;
+﻿import { extractYouTubeId } from "@/lib/admin/validation";
 
-async function getVideoTitle() {
-  try {
-    const res = await fetch(oembedUrl, {
-      next: { revalidate: 86400 },
-    });
-    if (!res.ok) return "Featured video";
-    const data = (await res.json()) as { title?: string };
-    return data.title ?? "Featured video";
-  } catch {
-    return "Featured video";
-  }
-}
+type FeaturedVideoSectionProps = {
+  youtubeUrl?: string;
+  title?: string;
+};
 
-export default async function FeaturedVideoSection() {
-  const title = await getVideoTitle();
+export default function FeaturedVideoSection({
+  youtubeUrl = "https://www.youtube.com/watch?v=3zGhq1ZKbjg",
+  title = "Featured video",
+}: FeaturedVideoSectionProps) {
+  const videoId = extractYouTubeId(youtubeUrl) ?? "3zGhq1ZKbjg";
 
   return (
     <section className="bg-black py-20 sm:py-24">
@@ -30,6 +21,7 @@ export default async function FeaturedVideoSection() {
               className="absolute inset-0 h-full w-full"
               src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
               title="Featured video"
+              loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />

@@ -6,13 +6,13 @@ import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { LogoMark } from "./LogoMark";
 
 const navItems = [
-  "Home",
-  "About",
-  "Live Events",
-  "Music",
-  "Videos",
-  "Charts",
-  "Merch",
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
+  { label: "Live Events", href: "#" },
+  { label: "Music", href: "/music" },
+  { label: "Videos", href: "#" },
+  { label: "Charts", href: "#" },
+  { label: "Merch", href: "#" },
 ];
 
 const socials = [
@@ -22,36 +22,56 @@ const socials = [
   { label: "YouTube", icon: Youtube, href: "#" },
 ];
 
-export default function Header() {
+type HeaderProps = {
+  variant?: "light" | "dark";
+};
+
+export default function Header({ variant = "light" }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const isDark = variant === "dark";
 
   return (
     <header className="absolute top-0 left-0 right-0 z-20">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/50 via-black/20 to-transparent" />
+      <div
+        className={[
+          "pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b to-transparent",
+          isDark ? "from-white/60 via-white/20" : "from-black/50 via-black/20",
+        ].join(" ")}
+      />
       <div className="relative mx-auto flex max-w-6xl items-center justify-between py-2 pl-1 pr-4 sm:py-2 sm:pl-2 sm:pr-6 lg:py-2 lg:pl-2 lg:pr-8">
         <div className="-ml-1 flex items-center gap-3 sm:-ml-2 lg:-ml-3">
-          <LogoMark className="h-16 w-24" />
+          <LogoMark className="h-16 w-24" variant={isDark ? "dark" : "light"} />
         </div>
 
-        <nav className="hidden items-center gap-6 text-xs font-semibold uppercase tracking-[0.35em] text-white/90 md:flex">
+        <nav
+          className={[
+            "hidden items-center gap-6 text-xs font-semibold uppercase tracking-[0.35em] md:flex",
+            isDark ? "text-black/80" : "text-white/90",
+          ].join(" ")}
+        >
           {navItems.map((item) => (
             <Link
-              key={item}
-              href="#"
+              key={item.label}
+              href={item.href}
               className="transition-opacity hover:opacity-70"
             >
-              {item}
+              {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div
+          className={[
+            "hidden items-center gap-4 md:flex",
+            isDark ? "text-black/80" : "text-white/90",
+          ].join(" ")}
+        >
           {socials.map(({ label, icon: Icon, href }) => (
             <Link
               key={label}
               href={href}
               aria-label={label}
-              className="text-white/90 transition-opacity hover:opacity-70"
+              className="transition-opacity hover:opacity-70"
             >
               <Icon className="h-5 w-5" />
             </Link>
@@ -64,9 +84,9 @@ export default function Header() {
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
           <span className="flex h-5 w-6 flex-col justify-between">
-            <span className="h-0.5 w-full bg-white" />
-            <span className="h-0.5 w-full bg-white" />
-            <span className="h-0.5 w-full bg-white" />
+            <span className={["h-0.5 w-full", isDark ? "bg-black" : "bg-white"].join(" ")} />
+            <span className={["h-0.5 w-full", isDark ? "bg-black" : "bg-white"].join(" ")} />
+            <span className={["h-0.5 w-full", isDark ? "bg-black" : "bg-white"].join(" ")} />
           </span>
         </button>
       </div>
@@ -92,16 +112,16 @@ export default function Header() {
               </button>
             </div>
             <div className="flex h-full flex-col gap-6 px-6 pb-10 text-sm font-semibold uppercase tracking-[0.35em] text-white">
-              {navItems.map((item) => (
-                <Link
-                  key={item}
-                  href="#"
-                  className="transition-opacity hover:opacity-70"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item}
-                </Link>
-              ))}
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="transition-opacity hover:opacity-70"
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
               <div className="mt-6 flex items-center gap-4">
                 {socials.map(({ label, icon: Icon, href }) => (
                   <Link
