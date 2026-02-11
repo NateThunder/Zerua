@@ -1,19 +1,23 @@
-import { defaultAboutContent, defaultHeroCopy, defaultShowcaseVideo } from "./admin/defaults";
+import { defaultAboutContent, defaultFeaturedVideoUrl, defaultHeroCopy } from "./admin/defaults";
 import type {
   AboutContent,
   ChartItem,
+  FeaturedVideoUrlContent,
   HomeHeroCopyContent,
   MerchItem,
   Release,
   ReleasePlatformLink,
-  ShowcaseVideoContent,
   TourDate,
 } from "./admin/types";
+import { getFeaturedVideoUrlSetting } from "./featured-video";
 import { fetchRows, storagePublicUrl } from "./supabase/server";
 
 type SiteContentRow = { key: string; value: unknown };
 
-function withPublicUrl(path: string, bucket: "release-covers" | "charts" | "merch") {
+function withPublicUrl(
+  path: string | null | undefined,
+  bucket: "release-covers" | "charts" | "merch"
+) {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   return storagePublicUrl(bucket, path);
@@ -49,7 +53,11 @@ export async function getReleasePlatformLinks(releaseId?: string) {
 export async function getCharts() {
   try {
     const rows = await fetchRows<ChartItem>("charts", { orderBy: "order_index" });
-    return rows.map((row) => ({ ...row, image_path: withPublicUrl(row.image_path, "charts") }));
+    return rows.map((row) => ({
+      ...row,
+      image_path: withPublicUrl(row.image_path, "charts"),
+      thumbnail_path: withPublicUrl(row.thumbnail_path, "charts"),
+    }));
   } catch {
     return [];
   }
@@ -93,11 +101,13 @@ export async function getAboutContent(): Promise<AboutContent> {
   return getSiteContentValue<AboutContent>("about", defaultAboutContent);
 }
 
-export async function getShowcaseVideoContent(): Promise<ShowcaseVideoContent> {
-  return getSiteContentValue<ShowcaseVideoContent>(
-    "showcase_video",
-    defaultShowcaseVideo
-  );
+export async function getFeaturedVideoUrl(): Promise<FeaturedVideoUrlContent> {
+  try {
+    const value = await getFeaturedVideoUrlSetting();
+    return value || defaultFeaturedVideoUrl;
+  } catch {
+    return defaultFeaturedVideoUrl;
+  }
 }
 
 export async function getHomeHeroCopy(): Promise<HomeHeroCopyContent> {

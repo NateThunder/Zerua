@@ -4,6 +4,8 @@ export type TourDate = {
   city: string;
   venue: string;
   ticket_url: string;
+  is_free?: boolean;
+  is_sold_out?: boolean;
   order_index: number;
   created_at?: string;
   updated_at?: string;
@@ -35,6 +37,7 @@ export type ChartItem = {
   id: string;
   title: string;
   image_path: string;
+  thumbnail_path?: string | null;
   url: string;
   order_index: number;
   created_at?: string;
@@ -55,10 +58,7 @@ export type AboutContent = {
   paragraphs: string[];
 };
 
-export type ShowcaseVideoContent = {
-  youtube_url: string;
-  title?: string;
-};
+export type FeaturedVideoUrlContent = string;
 
 export type HomeHeroCopyContent = {
   headline: string;
@@ -67,6 +67,6 @@ export type HomeHeroCopyContent = {
 
 export type SiteContentValue =
   | AboutContent
-  | ShowcaseVideoContent
+  | FeaturedVideoUrlContent
   | HomeHeroCopyContent
   | Record<string, unknown>;

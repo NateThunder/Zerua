@@ -8,6 +8,7 @@ import AdminForm from "@/components/admin/AdminForm";
 import AdminMediaUpload from "@/components/admin/AdminMediaUpload";
 import AdminReorderControls from "@/components/admin/AdminReorderControls";
 import AdminModal from "@/components/admin/AdminModal";
+import { isValidUrl } from "@/lib/admin/validation";
 import type {
   ChartItem,
   MerchItem,
@@ -24,7 +25,7 @@ const tabs = [
   "Charts",
   "Merch",
   "About",
-  "Showcase Video",
+  "Featured Video",
 ];
 
 const modalInputClass =
@@ -42,6 +43,8 @@ type AdminEvent = {
   category: string;
   location: string;
   ticketUrl: string;
+  isFree: boolean;
+  isSoldOut: boolean;
 };
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -66,8 +69,10 @@ export default function AdminPage() {
   const [merch, setMerch] = useState<MerchItem[]>([]);
   const [selectedReleaseId, setSelectedReleaseId] = useState("");
   const [aboutText, setAboutText] = useState("");
-  const [showcaseUrl, setShowcaseUrl] = useState("");
-  const [showcaseTitle, setShowcaseTitle] = useState("");
+  const [featuredVideoUrl, setFeaturedVideoUrl] = useState("");
+  const [featuredVideoModalOpen, setFeaturedVideoModalOpen] = useState(false);
+  const [featuredVideoInput, setFeaturedVideoInput] = useState("");
+  const [featuredVideoFormError, setFeaturedVideoFormError] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -75,9 +80,11 @@ export default function AdminPage() {
   const [eventForm, setEventForm] = useState({
     title: "",
     dateTime: "",
-    category: "General",
+    category: "",
     location: "",
     ticketUrl: "",
+    isFree: false,
+    isSoldOut: false,
   });
   const [eventFormError, setEventFormError] = useState("");
   const [releaseModalOpen, setReleaseModalOpen] = useState(false);
@@ -92,22 +99,24 @@ export default function AdminPage() {
 
   const loadAll = async () => {
     try {
-      const [tour, rel, chartRows, merchRows, about, showcase] = await Promise.all([
+      const [tour, rel, chartRows, merchRows, about, featuredVideo] = await Promise.all([
         api<TourDate[]>("/api/admin/tour-dates"),
         api<Release[]>("/api/admin/releases"),
         api<ChartItem[]>("/api/admin/charts"),
         api<MerchItem[]>("/api/admin/merch-items"),
         api<SiteContentRow | null>("/api/admin/site-content/about"),
-        api<SiteContentRow | null>("/api/admin/site-content/showcase_video"),
+        api<{ url: string }>("/api/admin/featured-video"),
       ]);
       setEvents(
         tour.map((row) => ({
           id: row.id,
           title: row.venue,
           dateTime: row.event_date,
-          category: "General",
+          category: "",
           location: row.city,
-          ticketUrl: row.ticket_url,
+          ticketUrl: row.ticket_url || "",
+          isFree: Boolean(row.is_free),
+          isSoldOut: Boolean(row.is_sold_out),
         }))
       );
       setReleases(rel);
@@ -116,9 +125,7 @@ export default function AdminPage() {
       if (rel.length) setSelectedReleaseId(rel[0].id);
       const aboutValue = (about?.value as { paragraphs?: string[] } | undefined)?.paragraphs ?? [];
       setAboutText(aboutValue.join("\n\n"));
-      const showcaseValue = (showcase?.value as { youtube_url?: string; title?: string } | undefined) ?? {};
-      setShowcaseUrl(showcaseValue.youtube_url ?? "");
-      setShowcaseTitle(showcaseValue.title ?? "");
+      setFeaturedVideoUrl(featuredVideo.url ?? "");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -171,9 +178,11 @@ export default function AdminPage() {
     setEventForm({
       title: "",
       dateTime: "",
-      category: "General",
+      category: "",
       location: "",
       ticketUrl: "",
+      isFree: false,
+      isSoldOut: false,
     });
     setEventFormError("");
     setEventModalOpen(true);
@@ -187,6 +196,8 @@ export default function AdminPage() {
       category: event.category,
       location: event.location,
       ticketUrl: event.ticketUrl,
+      isFree: event.isFree,
+      isSoldOut: event.isSoldOut,
     });
     setEventFormError("");
     setEventModalOpen(true);
@@ -200,8 +211,13 @@ export default function AdminPage() {
 
   async function saveEvent(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!eventForm.title.trim() || !eventForm.dateTime.trim() || !eventForm.ticketUrl.trim()) {
-      setEventFormError("Title, Date, and Ticket URL are required.");
+    if (!eventForm.title.trim() || !eventForm.dateTime.trim()) {
+      setEventFormError("Title and Date are required.");
+      return;
+    }
+    const normalizedTicketUrl = eventForm.isFree ? "" : eventForm.ticketUrl.trim();
+    if (!eventForm.isFree && normalizedTicketUrl && !isValidUrl(normalizedTicketUrl)) {
+      setEventFormError("Ticket URL must be a valid URL.");
       return;
     }
 
@@ -213,7 +229,9 @@ export default function AdminPage() {
             event_date: eventForm.dateTime,
             city: eventForm.location || "TBA",
             venue: eventForm.title,
-            ticket_url: eventForm.ticketUrl,
+            ticket_url: normalizedTicketUrl,
+            is_free: eventForm.isFree,
+            is_sold_out: eventForm.isSoldOut,
           }),
         });
         setEvents((prev) =>
@@ -223,9 +241,11 @@ export default function AdminPage() {
                   id: updated.id,
                   title: updated.venue,
                   dateTime: updated.event_date,
-                  category: eventForm.category || "General",
+                  category: eventForm.category.trim(),
                   location: updated.city,
                   ticketUrl: updated.ticket_url,
+                  isFree: Boolean(updated.is_free),
+                  isSoldOut: Boolean(updated.is_sold_out),
                 }
               : item
           )
@@ -238,7 +258,9 @@ export default function AdminPage() {
             event_date: eventForm.dateTime,
             city: eventForm.location || "TBA",
             venue: eventForm.title,
-            ticket_url: eventForm.ticketUrl,
+            ticket_url: normalizedTicketUrl,
+            is_free: eventForm.isFree,
+            is_sold_out: eventForm.isSoldOut,
             order_index: events.length,
           }),
         });
@@ -248,9 +270,11 @@ export default function AdminPage() {
             id: created.id,
             title: created.venue,
             dateTime: created.event_date,
-            category: eventForm.category || "General",
+            category: eventForm.category.trim(),
             location: created.city,
             ticketUrl: created.ticket_url,
+            isFree: Boolean(created.is_free),
+            isSoldOut: Boolean(created.is_sold_out),
           },
         ]);
         setStatus("Event added.");
@@ -302,6 +326,42 @@ export default function AdminPage() {
       closeReleaseModal();
     } catch (err) {
       setReleaseFormError((err as Error).message);
+    }
+  }
+
+  function openFeaturedVideoModal() {
+    setFeaturedVideoInput(featuredVideoUrl);
+    setFeaturedVideoFormError("");
+    setFeaturedVideoModalOpen(true);
+  }
+
+  function closeFeaturedVideoModal() {
+    setFeaturedVideoModalOpen(false);
+    setFeaturedVideoFormError("");
+  }
+
+  async function saveFeaturedVideo(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const normalized = featuredVideoInput.trim();
+    if (!normalized) {
+      setFeaturedVideoFormError("Featured video URL is required.");
+      return;
+    }
+    if (!isValidUrl(normalized)) {
+      setFeaturedVideoFormError("Enter a valid URL starting with http:// or https://");
+      return;
+    }
+
+    try {
+      const data = await api<{ url: string }>("/api/admin/featured-video", {
+        method: "PATCH",
+        body: JSON.stringify({ url: normalized }),
+      });
+      setFeaturedVideoUrl(data.url);
+      setStatus("Featured video updated.");
+      closeFeaturedVideoModal();
+    } catch (err) {
+      setFeaturedVideoFormError((err as Error).message);
     }
   }
 
@@ -388,7 +448,9 @@ export default function AdminPage() {
                   <tr key={row.id} className="border-t border-white/10">
                     <td className="px-4 py-3">{row.title}</td>
                     <td className="px-4 py-3">{row.dateTime}</td>
-                    <td className="px-4 py-3">{row.category}</td>
+                    <td className="px-4 py-3">
+                      {row.isSoldOut ? "Sold Out" : row.isFree ? "Free Event" : row.category || "-"}
+                    </td>
                     <td className="px-4 py-3">{row.location || "-"}</td>
                     <td className="px-4 py-3 flex items-center gap-2">
                       <button
@@ -545,6 +607,7 @@ export default function AdminPage() {
               bucket={tab === "Charts" ? "charts" : "merch"}
               endpoint={tab === "Charts" ? "/api/admin/charts" : "/api/admin/merch-items"}
               reorderEndpoint={tab === "Charts" ? "charts" : "merch-items"}
+              enableOptionalThumbnail={tab === "Charts"}
               rows={tab === "Charts" ? charts : merch}
               setRows={(rows) => (tab === "Charts" ? setCharts(rows as ChartItem[]) : setMerch(rows as MerchItem[]))}
               deleteRow={deleteRow}
@@ -578,32 +641,43 @@ export default function AdminPage() {
             </AdminForm>
           )}
 
-          {tab === "Showcase Video" && (
-            <AdminForm
-              title="Showcase video"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                await api("/api/admin/site-content/showcase_video", {
-                  method: "PATCH",
-                  body: JSON.stringify({ value: { youtube_url: showcaseUrl, title: showcaseTitle } }),
-                });
-                setStatus("Showcase video saved");
-              }}
-              submitLabel="Save Showcase"
-            >
-              <input
-                value={showcaseUrl}
-                onChange={(e) => setShowcaseUrl(e.target.value)}
-                placeholder="YouTube URL"
-                className="w-full rounded border border-white/20 bg-black/20 px-3 py-2 text-sm text-white"
-              />
-              <input
-                value={showcaseTitle}
-                onChange={(e) => setShowcaseTitle(e.target.value)}
-                placeholder="Optional title"
-                className="w-full rounded border border-white/20 bg-black/20 px-3 py-2 text-sm text-white"
-              />
-            </AdminForm>
+          {tab === "Featured Video" && (
+            <section className="space-y-5">
+              <div>
+                <h2 className="font-anton text-4xl uppercase text-white">Featured Video</h2>
+                <p className="mt-1 text-sm text-white/65">
+                  Set one video link used on the Home page Featured Video section.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">
+                  Current Link
+                </p>
+                {featuredVideoUrl ? (
+                  <a
+                    href={featuredVideoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 block break-all text-sm text-[#FF6F61] underline decoration-[#FF6F61]/40 underline-offset-4 hover:text-[#ff8f86]"
+                  >
+                    {featuredVideoUrl}
+                  </a>
+                ) : (
+                  <p className="mt-3 text-sm text-white/70">No featured video set.</p>
+                )}
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={openFeaturedVideoModal}
+                    className={modalPrimaryButtonClass}
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            </section>
           )}
         </AdminLayout>
       </div>
@@ -633,7 +707,7 @@ export default function AdminPage() {
             onChange={(e) =>
               setEventForm((p) => ({ ...p, category: e.target.value }))
             }
-            placeholder="Category"
+            placeholder="Category (optional)"
             className={modalInputClass}
           />
           <input
@@ -650,9 +724,43 @@ export default function AdminPage() {
             onChange={(e) =>
               setEventForm((p) => ({ ...p, ticketUrl: e.target.value }))
             }
-            placeholder="Ticket URL (https://...)"
-            className={modalInputClass}
+            placeholder={
+              eventForm.isFree
+                ? "No ticket URL needed for free events"
+                : "Ticket URL (optional)"
+            }
+            disabled={eventForm.isFree}
+            className={`${modalInputClass} disabled:cursor-not-allowed disabled:opacity-60`}
           />
+          <label className="flex items-center gap-2 text-sm text-white/80">
+            <input
+              type="checkbox"
+              checked={eventForm.isFree}
+              onChange={(e) =>
+                setEventForm((p) => ({
+                  ...p,
+                  isFree: e.target.checked,
+                  ticketUrl: e.target.checked ? "" : p.ticketUrl,
+                }))
+              }
+              className="h-4 w-4 rounded border-white/30 bg-black/40 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/50"
+            />
+            Free event?
+          </label>
+          <label className="flex items-center gap-2 text-sm text-white/80">
+            <input
+              type="checkbox"
+              checked={eventForm.isSoldOut}
+              onChange={(e) =>
+                setEventForm((p) => ({
+                  ...p,
+                  isSoldOut: e.target.checked,
+                }))
+              }
+              className="h-4 w-4 rounded border-white/30 bg-black/40 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]/50"
+            />
+            Sold out?
+          </label>
           {!!eventFormError && <p className="text-sm text-red-300">{eventFormError}</p>}
           <div className="flex justify-end gap-2 pt-1">
             <button
@@ -729,6 +837,37 @@ export default function AdminPage() {
           </div>
         </form>
       </AdminModal>
+
+      <AdminModal
+        open={featuredVideoModalOpen}
+        title="Edit Featured Video"
+        onClose={closeFeaturedVideoModal}
+      >
+        <form onSubmit={saveFeaturedVideo} className="space-y-3">
+          <input
+            type="url"
+            value={featuredVideoInput}
+            onChange={(e) => setFeaturedVideoInput(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className={modalInputClass}
+          />
+          {!!featuredVideoFormError && (
+            <p className="text-sm text-red-300">{featuredVideoFormError}</p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={closeFeaturedVideoModal}
+              className={modalSecondaryButtonClass}
+            >
+              Cancel
+            </button>
+            <button type="submit" className={modalPrimaryButtonClass}>
+              Save
+            </button>
+          </div>
+        </form>
+      </AdminModal>
     </main>
   );
 }
@@ -765,11 +904,12 @@ function SimpleForm({
   );
 }
 
-function MediaSection<T extends { id: string; title: string; image_path: string; url: string }>(props: {
+function MediaSection<T extends { id: string; title: string; image_path: string; url: string; thumbnail_path?: string | null }>(props: {
   title: string;
   bucket: "charts" | "merch";
   endpoint: string;
   reorderEndpoint: string;
+  enableOptionalThumbnail?: boolean;
   rows: T[];
   setRows: (rows: T[]) => void;
   deleteRow: (resource: string, id: string) => Promise<void>;
@@ -778,9 +918,23 @@ function MediaSection<T extends { id: string; title: string; image_path: string;
   api: <U>(url: string, init?: RequestInit) => Promise<U>;
   setStatus: (v: string) => void;
 }) {
-  const { title, bucket, endpoint, reorderEndpoint, rows, setRows, deleteRow, move, reorder, api, setStatus } = props;
+  const {
+    title,
+    bucket,
+    endpoint,
+    reorderEndpoint,
+    enableOptionalThumbnail = false,
+    rows,
+    setRows,
+    deleteRow,
+    move,
+    reorder,
+    api,
+    setStatus,
+  } = props;
   const [name, setName] = useState("");
   const [imagePath, setImagePath] = useState("");
+  const [thumbnailPath, setThumbnailPath] = useState("");
   const [url, setUrl] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [formError, setFormError] = useState("");
@@ -799,6 +953,7 @@ function MediaSection<T extends { id: string; title: string; image_path: string;
           onClick={() => {
             setName("");
             setImagePath("");
+            setThumbnailPath("");
             setUrl("");
             setFormError("");
             setModalOpen(true);
@@ -808,11 +963,20 @@ function MediaSection<T extends { id: string; title: string; image_path: string;
           + Add new
         </button>
       </div>
-      <AdminTable headers={["Title", "Image", "URL", "Actions"]}>
+      <AdminTable
+        headers={
+          enableOptionalThumbnail
+            ? ["Title", "Image", "Thumbnail", "URL", "Actions"]
+            : ["Title", "Image", "URL", "Actions"]
+        }
+      >
         {rows.map((row, idx) => (
           <tr key={row.id} className="border-t border-white/10">
             <td className="px-4 py-3">{row.title}</td>
             <td className="px-4 py-3 truncate max-w-[220px]">{row.image_path}</td>
+            {enableOptionalThumbnail ? (
+              <td className="px-4 py-3 truncate max-w-[220px]">{row.thumbnail_path || "-"}</td>
+            ) : null}
             <td className="px-4 py-3 truncate max-w-[220px]">{row.url}</td>
             <td className="px-4 py-3 flex items-center gap-2">
               <AdminReorderControls
@@ -856,13 +1020,23 @@ function MediaSection<T extends { id: string; title: string; image_path: string;
               setFormError("Title, image path, and URL are required.");
               return;
             }
+            const payload: Record<string, unknown> = {
+              title: name,
+              image_path: imagePath,
+              url,
+            };
+            const normalizedThumb = thumbnailPath.trim();
+            if (enableOptionalThumbnail && normalizedThumb) {
+              payload.thumbnail_path = normalizedThumb;
+            }
             const created = await api<T>(endpoint, {
               method: "POST",
-              body: JSON.stringify({ title: name, image_path: imagePath, url }),
+              body: JSON.stringify(payload),
             });
             setRows([...rows, created]);
             setName("");
             setImagePath("");
+            setThumbnailPath("");
             setUrl("");
             setFormError("");
             setModalOpen(false);
@@ -873,6 +1047,17 @@ function MediaSection<T extends { id: string; title: string; image_path: string;
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Title" className={modalInputClass} />
           <input value={imagePath} onChange={(e) => setImagePath(e.target.value)} placeholder="Image path" className={modalInputClass} />
           <AdminMediaUpload bucket={bucket} onUploaded={setImagePath} />
+          {enableOptionalThumbnail ? (
+            <>
+              <input
+                value={thumbnailPath}
+                onChange={(e) => setThumbnailPath(e.target.value)}
+                placeholder="Thumbnail path (optional)"
+                className={modalInputClass}
+              />
+              <AdminMediaUpload bucket={bucket} onUploaded={setThumbnailPath} />
+            </>
+          ) : null}
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className={modalInputClass} />
           {!!formError && <p className="text-sm text-red-300">{formError}</p>}
           <div className="flex justify-end gap-2 pt-1">

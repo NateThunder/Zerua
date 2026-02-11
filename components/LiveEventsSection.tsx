@@ -112,6 +112,8 @@ export default function LiveEventsSection({ events }: LiveEventsSectionProps) {
   const selectedEventHasTickets = selectedEvent
     ? isValidHttpUrl(selectedEvent.ticket_url)
     : false;
+  const selectedEventIsFree = selectedEvent ? Boolean(selectedEvent.is_free) : false;
+  const selectedEventIsSoldOut = selectedEvent ? Boolean(selectedEvent.is_sold_out) : false;
 
   return (
     <>
@@ -128,35 +130,50 @@ export default function LiveEventsSection({ events }: LiveEventsSectionProps) {
                   {group.label}
                 </h2>
                 <div className="grid gap-4">
-                  {group.items.map(({ event, date }) => (
-                    <button
-                      key={event.id}
-                      type="button"
-                      onClick={() => setSelectedEvent(event)}
-                      className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 text-left text-white transition hover:border-[#FF6F61]/40 hover:bg-white/10 md:grid-cols-[minmax(0,1fr)_88px] md:items-center"
-                    >
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FF6F61]">
-                          Live Event
-                        </p>
-                        <h3 className="font-anton text-2xl uppercase leading-tight text-white sm:text-3xl">
-                          {event.venue}
-                        </h3>
-                        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/80">
-                          <span>{date ? fullDateFormatter.format(date) : "Date TBA"}</span>
-                          <span>{event.city || "Location TBA"}</span>
+                  {group.items.map(({ event, date }) => {
+                    const isFreeEvent = Boolean(event.is_free);
+                    const isSoldOutEvent = Boolean(event.is_sold_out);
+                    return (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => setSelectedEvent(event)}
+                        className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 text-left text-white transition hover:border-[#FF6F61]/40 hover:bg-white/10 md:grid-cols-[minmax(0,1fr)_88px] md:items-center"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FF6F61]">
+                              Live Event
+                            </p>
+                            {isSoldOutEvent ? (
+                              <span className="rounded-full border border-red-400/45 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-200">
+                                Sold Out
+                              </span>
+                            ) : isFreeEvent ? (
+                              <span className="rounded-full border border-[#FF6F61]/45 bg-[#FF6F61]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#FF6F61]">
+                                Free Event
+                              </span>
+                            ) : null}
+                          </div>
+                          <h3 className="font-anton text-2xl uppercase leading-tight text-white sm:text-3xl">
+                            {event.venue}
+                          </h3>
+                          <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/80">
+                            <span>{date ? fullDateFormatter.format(date) : "Date TBA"}</span>
+                            <span>{event.city || "Location TBA"}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 md:flex-col md:items-center md:gap-1">
-                        <span className="font-anton text-4xl leading-none text-[#FF6F61]">
-                          {date ? shortDayFormatter.format(date) : "--"}
-                        </span>
-                        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-                          {date ? shortWeekdayFormatter.format(date) : "TBA"}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                        <div className="flex items-center gap-4 md:flex-col md:items-center md:gap-1">
+                          <span className="font-anton text-4xl leading-none text-[#FF6F61]">
+                            {date ? shortDayFormatter.format(date) : "--"}
+                          </span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+                            {date ? shortWeekdayFormatter.format(date) : "TBA"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))
@@ -199,7 +216,15 @@ export default function LiveEventsSection({ events }: LiveEventsSectionProps) {
             </div>
 
             <div className="mt-8">
-              {selectedEventHasTickets ? (
+              {selectedEventIsSoldOut ? (
+                <span className="inline-flex rounded-full border border-red-400/45 bg-red-500/10 px-7 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-red-200">
+                  Sold Out
+                </span>
+              ) : selectedEventIsFree ? (
+                <span className="inline-flex rounded-full border border-[#FF6F61]/40 bg-[#FF6F61]/10 px-7 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6F61]">
+                  Free Event
+                </span>
+              ) : selectedEventHasTickets ? (
                 <a
                   href={selectedEvent.ticket_url}
                   target="_blank"
