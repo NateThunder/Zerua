@@ -59,7 +59,7 @@ export default function VideosGridSection() {
       if (!res.ok || !json.data) {
         const message =
           json.code === "MISSING_YOUTUBE_CONFIG"
-            ? "Missing YouTube configuration. Add YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID to your .env.local file."
+            ? "Missing YouTube configuration. Set YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID in your environment variables."
             : json.error || "Could not load videos right now.";
         throw new Error(message);
       }
