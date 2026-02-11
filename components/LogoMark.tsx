@@ -1,19 +1,17 @@
 type LogoMarkProps = {
   className?: string;
+  variant?: "light" | "dark";
 };
 
-export function LogoMark({ className }: LogoMarkProps) {
+export function LogoMark({ className, variant = "light" }: LogoMarkProps) {
+  const src =
+    variant === "dark"
+      ? "/media/zerua-icon-logo-black.png"
+      : "/media/zerua-icon-logo-white.png";
+
   return (
-    <picture className={className}>
-      <source
-        media="(prefers-color-scheme: dark)"
-        srcSet="/media/zerua-icon-logo-white.png"
-      />
-      <img
-        src="/media/zerua-icon-logo-white.png"
-        alt="Zerua Music logo"
-        className="h-full w-full object-contain"
-      />
-    </picture>
+    <div className={className}>
+      <img src={src} alt="Zerua Music logo" className="h-full w-full object-contain" />
+    </div>
   );
 }
