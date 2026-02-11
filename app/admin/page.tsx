@@ -41,6 +41,7 @@ type AdminEvent = {
   dateTime: string;
   category: string;
   location: string;
+  ticketUrl: string;
 };
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -74,8 +75,9 @@ export default function AdminPage() {
   const [eventForm, setEventForm] = useState({
     title: "",
     dateTime: "",
-    category: "",
+    category: "General",
     location: "",
+    ticketUrl: "",
   });
   const [eventFormError, setEventFormError] = useState("");
   const [releaseModalOpen, setReleaseModalOpen] = useState(false);
@@ -105,6 +107,7 @@ export default function AdminPage() {
           dateTime: row.event_date,
           category: "General",
           location: row.city,
+          ticketUrl: row.ticket_url,
         }))
       );
       setReleases(rel);
@@ -156,12 +159,22 @@ export default function AdminPage() {
   }
 
   async function deleteRow(resource: string, id: string) {
-    await fetch(`/api/admin/${resource}/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/${resource}/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(json?.error || "Delete failed");
+    }
   }
 
   function openAddEventModal() {
     setEditingEventId(null);
-    setEventForm({ title: "", dateTime: "", category: "", location: "" });
+    setEventForm({
+      title: "",
+      dateTime: "",
+      category: "General",
+      location: "",
+      ticketUrl: "",
+    });
     setEventFormError("");
     setEventModalOpen(true);
   }
@@ -173,6 +186,7 @@ export default function AdminPage() {
       dateTime: event.dateTime,
       category: event.category,
       location: event.location,
+      ticketUrl: event.ticketUrl,
     });
     setEventFormError("");
     setEventModalOpen(true);
@@ -184,32 +198,68 @@ export default function AdminPage() {
     setEventFormError("");
   }
 
-  function saveEvent(e: React.FormEvent<HTMLFormElement>) {
+  async function saveEvent(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!eventForm.title.trim() || !eventForm.dateTime.trim() || !eventForm.category.trim()) {
-      setEventFormError("Title, Date & time, and Category are required.");
+    if (!eventForm.title.trim() || !eventForm.dateTime.trim() || !eventForm.ticketUrl.trim()) {
+      setEventFormError("Title, Date, and Ticket URL are required.");
       return;
     }
 
-    if (editingEventId) {
-      setEvents((prev) =>
-        prev.map((item) =>
-          item.id === editingEventId ? { ...item, ...eventForm } : item
-        )
-      );
-      setStatus("Event updated.");
-    } else {
-      setEvents((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          ...eventForm,
-        },
-      ]);
-      setStatus("Event added.");
-    }
+    try {
+      if (editingEventId) {
+        const updated = await api<TourDate>(`/api/admin/tour-dates/${editingEventId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            event_date: eventForm.dateTime,
+            city: eventForm.location || "TBA",
+            venue: eventForm.title,
+            ticket_url: eventForm.ticketUrl,
+          }),
+        });
+        setEvents((prev) =>
+          prev.map((item) =>
+            item.id === editingEventId
+              ? {
+                  id: updated.id,
+                  title: updated.venue,
+                  dateTime: updated.event_date,
+                  category: eventForm.category || "General",
+                  location: updated.city,
+                  ticketUrl: updated.ticket_url,
+                }
+              : item
+          )
+        );
+        setStatus("Event updated.");
+      } else {
+        const created = await api<TourDate>("/api/admin/tour-dates", {
+          method: "POST",
+          body: JSON.stringify({
+            event_date: eventForm.dateTime,
+            city: eventForm.location || "TBA",
+            venue: eventForm.title,
+            ticket_url: eventForm.ticketUrl,
+            order_index: events.length,
+          }),
+        });
+        setEvents((prev) => [
+          ...prev,
+          {
+            id: created.id,
+            title: created.venue,
+            dateTime: created.event_date,
+            category: eventForm.category || "General",
+            location: created.city,
+            ticketUrl: created.ticket_url,
+          },
+        ]);
+        setStatus("Event added.");
+      }
 
-    closeEventModal();
+      closeEventModal();
+    } catch (err) {
+      setEventFormError((err as Error).message);
+    }
   }
 
   function openReleaseModal() {
@@ -351,13 +401,18 @@ export default function AdminPage() {
                       <button
                         type="button"
                         className="rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white/90 hover:bg-white/10"
-                        onClick={() => {
+                        onClick={async () => {
                           const ok = window.confirm(
                             "Are you sure you want to delete this event?"
                           );
                           if (!ok) return;
-                          setEvents((prev) => prev.filter((x) => x.id !== row.id));
-                          setStatus("Event deleted.");
+                          try {
+                            await deleteRow("tour-dates", row.id);
+                            setEvents((prev) => prev.filter((x) => x.id !== row.id));
+                            setStatus("Event deleted.");
+                          } catch (err) {
+                            setError((err as Error).message);
+                          }
                         }}
                       >
                         Delete
@@ -566,12 +621,12 @@ export default function AdminPage() {
             className={modalInputClass}
           />
           <input
+            type="date"
             value={eventForm.dateTime}
             onChange={(e) =>
               setEventForm((p) => ({ ...p, dateTime: e.target.value }))
             }
-            placeholder="Date & time"
-            className={modalInputClass}
+            className={`${modalInputClass} [color-scheme:dark]`}
           />
           <input
             value={eventForm.category}
@@ -587,6 +642,15 @@ export default function AdminPage() {
               setEventForm((p) => ({ ...p, location: e.target.value }))
             }
             placeholder="Location (optional)"
+            className={modalInputClass}
+          />
+          <input
+            type="url"
+            value={eventForm.ticketUrl}
+            onChange={(e) =>
+              setEventForm((p) => ({ ...p, ticketUrl: e.target.value }))
+            }
+            placeholder="Ticket URL (https://...)"
             className={modalInputClass}
           />
           {!!eventFormError && <p className="text-sm text-red-300">{eventFormError}</p>}
