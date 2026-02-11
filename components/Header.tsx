@@ -8,11 +8,11 @@ import { LogoMark } from "./LogoMark";
 const navItems = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  { label: "Live Events", href: "#" },
+  { label: "Live Events", href: "/live-events" },
   { label: "Music", href: "/music" },
-  { label: "Videos", href: "#" },
-  { label: "Charts", href: "#" },
-  { label: "Merch", href: "#" },
+  { label: "Videos", href: "/videos" },
+  { label: "Charts", href: "/charts" },
+  { label: "Merch", href: "/merch" },
 ];
 
 const socials = [

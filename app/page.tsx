@@ -133,9 +133,12 @@ export default async function Home() {
               <p className="max-w-2xl text-sm text-white/80 sm:text-base">
                 Discover the latest Zerua Music merch and exclusives.
               </p>
-              <button className="rounded-full bg-white px-8 py-3 text-xs font-semibold uppercase tracking-[0.35em] text-black transition-colors hover:bg-white/90">
+              <a
+                href="/merch"
+                className="rounded-full bg-white px-8 py-3 text-xs font-semibold uppercase tracking-[0.35em] text-black transition-colors hover:bg-white/90"
+              >
                 Shop Now
-              </button>
+              </a>
             </>
           )}
         </div>
